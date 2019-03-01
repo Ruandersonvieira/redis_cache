@@ -128,6 +128,7 @@ server.put('/:_id', function(req, res, next) {
     idCrash = new mongo.ObjectID(req.params._id);
     nameUp = req.body.name
     myobj = {$set:{ name: nameUp}};
+    
 
     crashDB.collection('crash').updateOne({ _id : idCrash} , myobj, function(err, result){
         if (err) return console.log(err);
@@ -137,12 +138,12 @@ server.put('/:_id', function(req, res, next) {
         redisClient.get(urlId, function (err, result) {
           if(err){return console.log(err)};
           if(result){
-            redisClient.set(urlId, myobj, function (err, result){
+            redisClient.set(urlId, myobj.$set, function (err, result){
               if (err) return console.log(err);
             });
           }
         });
-        res.send("Del all");
+        res.send("Update");
         return next();
     }); 
 });
