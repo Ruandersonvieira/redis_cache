@@ -1,0 +1,8 @@
+{
+  "dependencies": {
+    "mongodb": "^3.1.13",
+    "redis": "^2.8.0",
+    "redis-jsonify": "^1.2.0",
+    "restify": "^8.0.0"
+  }
+}
