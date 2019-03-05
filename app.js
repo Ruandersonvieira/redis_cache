@@ -2,13 +2,9 @@
 const restify = require('restify');
 var server = restify.createServer();
 
-
+global.db = require('./db');
 // Mongo + Config
-const MongoClient = require('mongodb').MongoClient;
-var mongo = require('mongodb');
-const db = {
-  url : "mongodb+srv://ruanderson_vieira:sillas123@huggyteste-c5ptp.mongodb.net/test?retryWrites=true",
-};
+
 
 
 //Redis + Config
@@ -35,18 +31,10 @@ redisClient.on('ready',function() {
 
 // Get all
 server.get('/', function(req, res, next) {
-    MongoClient.connect(db.url,{ useNewUrlParser: true } ,(err,database) =>{
-
-        if (err) return console.log(err);
-        const crashDB = database.db('huggyteste')
-        crashDB.collection('crash').find({}).toArray(function(err, docs) {
+      global.conn.collection('crash').find({}).toArray(function(err, docs) {
             if (err) return console.log(err);
-            res.send(docs);
-
+            return res.send(docs);
         });
-        return next();
-    });
-    return next();
 });
 
 // Get by id
@@ -79,58 +67,36 @@ server.get('/:_id', function(req, res, next) {
 
     // Get in mongo
     function mongoGet(){
-    MongoClient.connect(db.url,{ useNewUrlParser: true } ,(err,database) =>{
-
-        if (err) return console.log(err);
-        const crashDB = database.db('huggyteste');
         idCrash = new mongo.ObjectID(req.params._id);
 
-        crashDB.collection('crash').find({ _id : idCrash}).toArray(function(err, docs) {
+        global.conn.collection('crash').find({ _id : idCrash}).toArray(function(err, docs) {
             if (err) return console.log(err);
             redisSave(docs);
             console.log("Pegou do Mongo");
             res.send(docs);
             return next();
         });
-    });
   };
 });
 
 /// Creat  
 server.post('/', function(req, res, next) {
-    MongoClient.connect(db.url,{ useNewUrlParser: true } ,(err,database) =>{
-
-        if (err) return console.log(err);
-        const crashDB = database.db('huggyteste')
         myobj = req.body;
-        crashDB.collection('crash').insertOne(myobj,function(err, docs) {
-    
+        global.conn.collection('crash').insertOne(myobj,function(err, docs) {
             if (err) return console.log(err);
-            res.send("Save!");
-
+            return res.send("Save!");
         });
-        return next();
-    });
-
-    return next();
-
 });
 
 // Update 
 server.put('/:_id', function(req, res, next) {
   let urlId = "/" + req.params._id;
 
-  MongoClient.connect(db.url,{ useNewUrlParser: true } ,(err,database) =>{
-
-    if (err) return console.log(err);
-    const crashDB = database.db('huggyteste');
-
     idCrash = new mongo.ObjectID(req.params._id);
     nameUp = req.body.name
     myobj = {$set:{ name: nameUp}};
-    
 
-    crashDB.collection('crash').updateOne({ _id : idCrash} , myobj, function(err, result){
+    global.conn.collection('crash').updateOne({ _id : idCrash} , myobj, function(err, result){
         if (err) return console.log(err);
         console.log("Del in Mongo");
 
@@ -147,13 +113,11 @@ server.put('/:_id', function(req, res, next) {
         return next();
     }); 
 });
-});
 
 
 // DEL in redis
 server.del('/redis/:_id', function(req, res, next) {
   let urlId = "/" + req.params._id;
-
   redisClient.del(urlId, function (err, result) {
     if (err) return console.log(err);
     return res.send("Del in Redis")
@@ -165,17 +129,10 @@ server.del('/redis/:_id', function(req, res, next) {
 // DEL in mongo
 server.del('/mongo/:_id', function(req, res, next) {
   let urlId = "/" + req.params._id;
-
-  MongoClient.connect(db.url,{ useNewUrlParser: true } ,(err,database) =>{
-
-    if (err) return console.log(err);
-    const crashDB = database.db('huggyteste');
-
     idCrash = new mongo.ObjectID(req.params._id);
     myobj = req.body;
-    crashDB.collection('crash').deleteOne({ _id : idCrash}, myobj ,function(err, result){
+    global.conn.collection('crash').deleteOne({ _id : idCrash}, myobj ,function(err, result){
         if (err) return console.log(err);
-        console.log("Del in Mongo");
         //Check item
         redisClient.get(urlId, function (err, result) {
           if(err){return console.log(err)};
@@ -184,15 +141,11 @@ server.del('/mongo/:_id', function(req, res, next) {
               if (err) return console.log(err);
               console.log(result);
             });
-        
           }
         });
         res.send("Del all");
         return next();
     });
-});
-
-  
 });
 
 
