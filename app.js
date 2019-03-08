@@ -31,7 +31,7 @@ redisClient.on('error', function () {
 
 // Get all
 server.get('/', function (req, res, next) {
-  let urlId = req.path() + "all";
+  let urlId = req.path();
 
   //Check in redis
   function redisCheck() {
@@ -131,36 +131,55 @@ server.put('/:_id', function (req, res, next) {
 
   global.conn.collection('crash').updateOne({ _id: idCrash }, myobj, function (err, result) {
     if (err) return console.log(err);
+    updateId();
+    updateAll()
+  
     console.log("Update in Mongo");
+    return res.send("Update");
+  });
 
+
+  function updateId() {
     //Update item by id
     redisClient.get(urlId, function (err, result) {
       if (err) { return console.log(err) };
-      if (result) {
-        redisClient.set(urlId, JSON.stringify(myobj.$set), function (err, result) {
+      newresult = JSON.parse(result);
+      if (newresult) {
+        newresult[0].name = nameUp
+        newresult[0].status = statusUp
+        redisClient.set(urlId, JSON.stringify(newresult), function (err, result) {
           if (err) return console.log(err);
         });
       }
     });
-
+    console.log("Update one");
+  }
+  function updateAll() {
     //Update all itens 
     redisClient.get(url, function (err, result) {
       if (err) { return console.log(err) };
-      if (result) {
-        for (i = 0; i < result.length; i++) {
-          if (result[i]._id == urlId) {
-            result[i] = myobj.$set;
-        };
+      newresult = JSON.parse(result);
 
-            redisClient.set(urlId, myobj.$set, function (err, result) {
-              if (err) { return console.log(err) };
-              if (result) { res.send(JSON.parse(result));}
-            });
-});
-        
-res.send("Update");
-return next();
-    }); 
+      if (newresult) {
+        for (i = 0; i < newresult.length; i++) {
+          if (newresult[i]._id == req.params._id) {
+            newresult[i].name = nameUp;
+            newresult[i].status = statusUp;
+          };
+        };        
+          UpdateAllOK(newresult)
+      };
+
+    });
+  };
+    function UpdateAllOK(newresult){
+      console.log(newresult);
+          redisClient.set(url, JSON.stringify(newresult), function (err, result) {
+            if (err) { return console.log(err) };
+            return console.log(result);
+          });
+      console.log("Updade all");
+    };
 });
 
 
@@ -170,7 +189,10 @@ server.del('/redis/:_id', function (req, res, next) {
   let urlId = "/" + req.params._id;
   redisClient.del(urlId, function (err, result) {
     if (err) return console.log(err);
-    return res.send("Del in Redis")
+    if (result) {
+      return res.send("Del in Redis");
+    }
+    return res.send("Not Found");
   })
 
 });
