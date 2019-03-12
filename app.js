@@ -21,7 +21,7 @@ redisClient.on('error', function () {
 });
 
 // Get all
-server.get('/', function (req, res, next) {
+server.get('/', function (req, res) {
   let urlId = req.path();
   //Check in redis
   function redisCheck() {
@@ -90,7 +90,7 @@ server.get('/:_id', function (req, res, next) {
 });
 
 /// Creat one
-server.post('/', function (req, res, next) {
+server.post('/', function (req, res) {
   let url = "/";
   myobj = req.body;
   global.conn.collection('crash').insertOne(myobj, function (err, docs) {
@@ -105,7 +105,7 @@ server.post('/', function (req, res, next) {
 });
 
 // Update 
-server.put('/:_id', function (req, res, next) {
+server.put('/:_id', function (req, res) {
   let url = "/";
   let urlId = "/" + req.params._id;
   idCrash = new mongo.ObjectID(req.params._id);
@@ -162,7 +162,7 @@ server.put('/:_id', function (req, res, next) {
 });
 
 // DEL in redis
-server.del('/redis/:_id', function (req, res, next) {
+server.del('/redis/:_id', function (req, res) {
   let urlId = "/" + req.params._id;
   redisClient.del(urlId, function (err, result) {
     if (err) return console.log(err);
@@ -174,7 +174,7 @@ server.del('/redis/:_id', function (req, res, next) {
 });
 
 // DEL in mongo
-server.del('/mongo/:_id', function (req, res, next) {
+server.del('/mongo/:_id', function (req, res) {
   let urlId = "/" + req.params._id;
   idCrash = new mongo.ObjectID(req.params._id);
   myobj = req.body;
