@@ -4,8 +4,5 @@ MongoClient.connect("mongodb+srv://ruanderson_vieira:sillas123@huggyteste-c5ptp.
             .then(conn => global.conn = conn.db("huggyteste"))
             .catch(err => console.log(err))
  
-module.exports = { 
-
-    
-}
+module.exports = {}
 

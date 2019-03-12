@@ -1,21 +1,16 @@
 // Config Resify
 const restify = require('restify');
-var server = restify.createServer();
-
+let server = restify.createServer();
 
 // Mongo + Config
 global.db = require('./db');
-var mongo = require('mongodb');
-
+let mongo = require('mongodb');
 
 //Redis + Config
 const redis = require('redis');
 
-var redisClient = redis.createClient({ host: 'redis-16564.c73.us-east-1-2.ec2.cloud.redislabs.com', port: 16564 });
-redisClient.auth('XUBIIoEhmZiHwhwq81LIbn3C6Tw0hzo8', function (err, reply) {
-
-});
-
+let redisClient = redis.createClient({ host: 'redis-16564.c73.us-east-1-2.ec2.cloud.redislabs.com', port: 16564 });
+redisClient.auth('XUBIIoEhmZiHwhwq81LIbn3C6Tw0hzo8', function (err, reply));
 
 //test conection redis 
 redisClient.on('ready', function () {
@@ -25,21 +20,16 @@ redisClient.on('error', function () {
   console.log("Error in Redis");
 });
 
-
-
-
-
 // Get all
 server.get('/', function (req, res, next) {
   let urlId = req.path();
-
   //Check in redis
   function redisCheck() {
     redisClient.get(urlId, function (err, result) {
       //Check erro
       if (err) { return console.log(err) };
       // Retun of redis
-      if (result) { res.send(JSON.parse(result)); console.log("Pegou todos do Redis"); return next(); }
+      if (result) { console.log("Pegou todos do Redis"); return res.send(JSON.parse(result)) }
       //Get in Mongo
       else { mongoGet() };
     });
@@ -57,18 +47,14 @@ server.get('/', function (req, res, next) {
       if (err) return console.log(err);
       redisSave(docs)
       console.log("Pegou todos do Mongo");
-      res.send(docs);
-      return next();
+      return res.send(docs);
     });
   };
 });
 
-
-
 // Get by id
 server.get('/:_id', function (req, res, next) {
   let urlId = req.path();
-
   //Check in redis
   function redisCheck() {
     redisClient.get(urlId, function (err, result) {
@@ -81,12 +67,11 @@ server.get('/:_id', function (req, res, next) {
     });
   };
   redisCheck();
-
-
   // Save in redis
   function redisSave(docs) {
     redisClient.set(urlId, JSON.stringify(docs), function (err, result) {
       if (err) return console.log(err);
+      return next();
     });
   };
 
@@ -94,7 +79,6 @@ server.get('/:_id', function (req, res, next) {
   // Get in mongo
   function mongoGet() {
     idCrash = new mongo.ObjectID(req.params._id);
-
     global.conn.collection('crash').find({ _id: idCrash }).toArray(function (err, docs) {
       if (err) return console.log(err);
       redisSave(docs);
@@ -105,39 +89,36 @@ server.get('/:_id', function (req, res, next) {
   };
 });
 
-
-
-
-/// Creat  
+/// Creat one
 server.post('/', function (req, res, next) {
+  let url = "/";
   myobj = req.body;
   global.conn.collection('crash').insertOne(myobj, function (err, docs) {
     if (err) return console.log(err);
     return res.send("Save!");
   });
+  redisClient.del(url, function (err, result) {
+    if (err) return console.log(err);
+    if (result) {
+    }
+  })
 });
-
-
 
 // Update 
 server.put('/:_id', function (req, res, next) {
   let url = "/";
   let urlId = "/" + req.params._id;
-
   idCrash = new mongo.ObjectID(req.params._id);
   nameUp = req.body.name
   statusUp = req.body.status
   myobj = { $set: { name: nameUp, status: statusUp } };
-
   global.conn.collection('crash').updateOne({ _id: idCrash }, myobj, function (err, result) {
     if (err) return console.log(err);
     updateId();
-    updateAll()
-  
+    updateAll();
     console.log("Update in Mongo");
     return res.send("Update");
   });
-
 
   function updateId() {
     //Update item by id
@@ -159,30 +140,26 @@ server.put('/:_id', function (req, res, next) {
     redisClient.get(url, function (err, result) {
       if (err) { return console.log(err) };
       newresult = JSON.parse(result);
-
       if (newresult) {
         for (i = 0; i < newresult.length; i++) {
           if (newresult[i]._id == req.params._id) {
             newresult[i].name = nameUp;
             newresult[i].status = statusUp;
           };
-        };        
-          UpdateAllOK(newresult)
+        };
+        UpdateAllOK(newresult)
       };
-
     });
   };
-    function UpdateAllOK(newresult){
-      console.log(newresult);
-          redisClient.set(url, JSON.stringify(newresult), function (err, result) {
-            if (err) { return console.log(err) };
-            return console.log(result);
-          });
-      console.log("Updade all");
-    };
+  function UpdateAllOK(newresult) {
+    console.log(newresult);
+    redisClient.set(url, JSON.stringify(newresult), function (err, result) {
+      if (err) { return console.log(err) };
+      return console.log(result);
+    });
+    console.log("Updade all");
+  };
 });
-
-
 
 // DEL in redis
 server.del('/redis/:_id', function (req, res, next) {
@@ -194,10 +171,7 @@ server.del('/redis/:_id', function (req, res, next) {
     }
     return res.send("Not Found");
   })
-
 });
-
-
 
 // DEL in mongo
 server.del('/mongo/:_id', function (req, res, next) {
@@ -216,12 +190,9 @@ server.del('/mongo/:_id', function (req, res, next) {
         });
       }
     });
-    res.send("Del all");
-    return next();
+    return res.send("Del all");
   });
 });
-
-
 
 // Config Resify
 const port = 8007;
