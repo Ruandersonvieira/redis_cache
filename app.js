@@ -10,7 +10,7 @@ let mongo = require('mongodb');
 const redis = require('redis');
 
 let redisClient = redis.createClient({ host: 'redis-16564.c73.us-east-1-2.ec2.cloud.redislabs.com', port: 16564 });
-redisClient.auth('XUBIIoEhmZiHwhwq81LIbn3C6Tw0hzo8', function (err, reply));
+redisClient.auth('XUBIIoEhmZiHwhwq81LIbn3C6Tw0hzo8', function (err, reply){});
 
 //test conection redis 
 redisClient.on('ready', function () {
